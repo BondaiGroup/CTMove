@@ -1587,17 +1587,16 @@
     if (!phase.classList.contains('open')) {
       phase.classList.add('open');
     }
-    // Scroll the phase-header into view, accounting for the sticky nav
-    requestAnimationFrame(() => {
-      const header = phase.querySelector('.phase-header') || phase;
-      const navH = phaseNavEl.offsetHeight;
-      const headerTop = header.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: headerTop - navH - 8, behavior: 'instant' });
-      // Update active tab immediately
-      navTabs.forEach(t => t.classList.toggle('active', t.dataset.phase == n));
-      scrollNavTab(n);
-      setTimeout(() => { isNavScrolling = false; }, 300);
-    });
+    // Force reflow so expanded phase dimensions are available
+    const header = phase.querySelector('.phase-header') || phase;
+    void header.offsetHeight;
+    const navH = phaseNavEl.offsetHeight;
+    const headerTop = header.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top: headerTop - navH - 8, behavior: 'instant' });
+    // Update active tab immediately
+    navTabs.forEach(t => t.classList.toggle('active', t.dataset.phase == n));
+    scrollNavTab(n);
+    setTimeout(function() { isNavScrolling = false; }, 300);
   }
 
   // Scroll the nav bar horizontally to show the active tab (without affecting page scroll)
