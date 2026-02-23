@@ -1580,6 +1580,10 @@
   function scrollToPhase(n) {
     const phase = document.querySelector('[data-phase="' + n + '"]');
     if (!phase) return;
+    // Auto-expand the target phase if collapsed
+    if (!phase.classList.contains('open')) {
+      phase.classList.add('open');
+    }
     const navH = phaseNavEl.offsetHeight;
     const y = phase.getBoundingClientRect().top + window.scrollY - navH - 4;
     window.scrollTo({ top: y, behavior: 'smooth' });
