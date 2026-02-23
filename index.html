@@ -1588,7 +1588,8 @@
     requestAnimationFrame(() => {
       const navH = phaseNavEl.offsetHeight;
       const y = phase.getBoundingClientRect().top + window.scrollY - navH - 4;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      // Use instant scroll to avoid smooth-scroll drift on long pages with dynamic content
+      window.scrollTo({ top: y, behavior: 'instant' });
     });
   }
 
