@@ -452,6 +452,170 @@
   .tag.keep { background: var(--green-light); color: var(--green); }
   .cat-items .task:last-child { padding-bottom: 12px; }
 
+  /* COMMENT BUTTON */
+  .task-comment-btn {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .task:hover .task-comment-btn,
+  .task.has-comment .task-comment-btn {
+    opacity: 1;
+  }
+  .task-comment-btn svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    transition: color 0.15s;
+  }
+  .task-comment-btn:hover svg {
+    color: var(--accent);
+  }
+  .task.has-comment .task-comment-btn svg {
+    color: var(--accent);
+    fill: var(--accent-light);
+  }
+
+  /* COMMENT PANEL */
+  .comment-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0,0,0,0.25);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+  .comment-overlay.show { display: block; }
+
+  .comment-panel {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--surface);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    padding: 20px 24px 28px;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+    max-height: 60vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .comment-panel.show {
+    display: flex;
+    transform: translateY(0);
+  }
+  .comment-panel-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 14px;
+    flex-shrink: 0;
+  }
+  .comment-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .comment-panel-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+    margin-right: 12px;
+  }
+  .comment-panel-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .comment-panel-close:hover { color: var(--text); }
+  .comment-panel-close svg { width: 20px; height: 20px; }
+  .comment-panel-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .comment-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .comment-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+  .comment-textarea::placeholder {
+    color: var(--text-muted);
+  }
+  .comment-save-status {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    height: 16px;
+    transition: opacity 0.3s;
+    flex-shrink: 0;
+  }
+  .comment-save-status.saved {
+    color: var(--green);
+  }
+
+  @media (min-width: 768px) {
+    .comment-panel {
+      bottom: 0;
+      top: 0;
+      left: auto;
+      right: 0;
+      width: 380px;
+      max-height: none;
+      border-radius: 0;
+      border-left: 1px solid var(--border);
+      padding: 28px 24px;
+      transform: translateX(100%);
+      box-shadow: -8px 0 32px rgba(0,0,0,0.1);
+    }
+    .comment-panel.show {
+      transform: translateX(0);
+    }
+    .comment-panel-handle { display: none; }
+    .comment-textarea { min-height: 180px; }
+  }
+
   /* NOTES */
   .contract-note {
     margin: 0 20px 16px 56px;
@@ -473,6 +637,8 @@
     .task { padding-left: 48px; }
     .cat-header { padding-left: 36px; }
     .contract-note { margin-left: 36px; }
+    .task-comment-btn { opacity: 0.5; }
+    .task.has-comment .task-comment-btn { opacity: 1; }
   }
 
   @media print {
@@ -1074,6 +1240,21 @@
   <div class="term-card-body" id="termBody"></div>
 </div>
 
+<!-- COMMENT PANEL -->
+<div class="comment-overlay" id="commentOverlay" onclick="closeComment()"></div>
+<div class="comment-panel" id="commentPanel">
+  <div class="comment-panel-handle"></div>
+  <div class="comment-panel-header">
+    <div class="comment-panel-title" id="commentTaskLabel"></div>
+    <button class="comment-panel-close" onclick="closeComment()" aria-label="Close">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+    </button>
+  </div>
+  <div class="comment-panel-label">Note</div>
+  <textarea class="comment-textarea" id="commentTextarea" placeholder="Add a note about this task..."></textarea>
+  <div class="comment-save-status" id="commentSaveStatus"></div>
+</div>
+
 <script>
   // GLOSSARY
   const glossary = {
@@ -1413,6 +1594,112 @@
   } catch(e) {}
 
   updateProgress();
+
+  // ── COMMENTS ──────────────────────────────────────────
+  const commentOverlay = document.getElementById('commentOverlay');
+  const commentPanel = document.getElementById('commentPanel');
+  const commentTaskLabel = document.getElementById('commentTaskLabel');
+  const commentTextarea = document.getElementById('commentTextarea');
+  const commentSaveStatus = document.getElementById('commentSaveStatus');
+  let currentCommentTaskId = null;
+  let commentSaveTimer = null;
+
+  // Load saved comments
+  function getComments() {
+    try { return JSON.parse(localStorage.getItem('ct-move-comments') || '{}'); } catch(e) { return {}; }
+  }
+  function saveComments(comments) {
+    try { localStorage.setItem('ct-move-comments', JSON.stringify(comments)); } catch(e) {}
+  }
+
+  // Inject comment buttons into every task
+  document.querySelectorAll('.task').forEach(task => {
+    const cb = task.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    const btn = document.createElement('button');
+    btn.className = 'task-comment-btn';
+    btn.setAttribute('aria-label', 'Add comment');
+    btn.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H8.5l-3.7 2.8a.75.75 0 01-1.2-.6V14H4a2 2 0 01-2-2V5zm4 1a.75.75 0 000 1.5h8a.75.75 0 000-1.5H6zm0 3a.75.75 0 000 1.5h5a.75.75 0 000-1.5H6z" clip-rule="evenodd"/></svg>';
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      openComment(cb.id);
+    };
+    task.appendChild(btn);
+  });
+
+  // Mark tasks that have existing comments
+  function refreshCommentIndicators() {
+    const comments = getComments();
+    document.querySelectorAll('.task').forEach(task => {
+      const cb = task.querySelector('input[type="checkbox"]');
+      if (!cb) return;
+      task.classList.toggle('has-comment', !!comments[cb.id] && comments[cb.id].trim() !== '');
+    });
+  }
+  refreshCommentIndicators();
+
+  function openComment(taskId) {
+    currentCommentTaskId = taskId;
+    const cb = document.getElementById(taskId);
+    if (!cb) return;
+    const label = cb.closest('.task').querySelector('label');
+    commentTaskLabel.textContent = label ? label.textContent : 'Task';
+    const comments = getComments();
+    commentTextarea.value = comments[taskId] || '';
+    commentSaveStatus.textContent = '';
+    commentSaveStatus.classList.remove('saved');
+    commentOverlay.classList.add('show');
+    commentPanel.classList.add('show');
+    setTimeout(() => commentTextarea.focus(), 300);
+  }
+
+  function closeComment() {
+    // Save any pending changes immediately
+    if (currentCommentTaskId && commentSaveTimer) {
+      clearTimeout(commentSaveTimer);
+      doSaveComment();
+    }
+    commentOverlay.classList.remove('show');
+    commentPanel.classList.remove('show');
+    currentCommentTaskId = null;
+  }
+
+  function doSaveComment() {
+    if (!currentCommentTaskId) return;
+    const comments = getComments();
+    const val = commentTextarea.value.trim();
+    if (val) {
+      comments[currentCommentTaskId] = commentTextarea.value;
+    } else {
+      delete comments[currentCommentTaskId];
+    }
+    saveComments(comments);
+    refreshCommentIndicators();
+    commentSaveStatus.textContent = '✓ Saved';
+    commentSaveStatus.classList.add('saved');
+    setTimeout(() => {
+      commentSaveStatus.textContent = '';
+      commentSaveStatus.classList.remove('saved');
+    }, 2000);
+  }
+
+  // Auto-save on input with debounce
+  commentTextarea.addEventListener('input', function() {
+    commentSaveStatus.textContent = 'Saving...';
+    commentSaveStatus.classList.remove('saved');
+    if (commentSaveTimer) clearTimeout(commentSaveTimer);
+    commentSaveTimer = setTimeout(() => {
+      doSaveComment();
+      commentSaveTimer = null;
+    }, 500);
+  });
+
+  // Close comment panel on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && commentPanel.classList.contains('show')) {
+      closeComment();
+    }
+  });
 </script>
 </body>
 </html>
