@@ -1578,7 +1578,7 @@
   wisdomBarEl.parentNode.insertBefore(phaseNavEl, wisdomBarEl);
 
   function scrollToPhase(n) {
-    const phase = document.querySelector('[data-phase="' + n + '"]');
+    const phase = document.querySelector('.phase[data-phase="' + n + '"]');
     if (!phase) return;
     // Auto-expand the target phase if collapsed
     if (!phase.classList.contains('open')) {
@@ -1594,7 +1594,7 @@
   }
 
   // Active tab tracking via IntersectionObserver
-  const phaseEls = document.querySelectorAll('[data-phase]');
+  const phaseEls = document.querySelectorAll('.phase[data-phase]');
   const navTabs = phaseNavInner.querySelectorAll('.phase-nav-tab');
   let activePhases = new Set();
 
