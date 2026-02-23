@@ -1577,9 +1577,12 @@
   const wisdomBarEl = document.getElementById('wisdomBar');
   wisdomBarEl.parentNode.insertBefore(phaseNavEl, wisdomBarEl);
 
+  let isNavScrolling = false;
+
   function scrollToPhase(n) {
     const phase = document.querySelector('.phase[data-phase="' + n + '"]');
     if (!phase) return;
+    isNavScrolling = true;
     // Auto-expand the target phase if collapsed
     if (!phase.classList.contains('open')) {
       phase.classList.add('open');
@@ -1590,7 +1593,21 @@
       const navH = phaseNavEl.offsetHeight;
       const headerTop = header.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({ top: headerTop - navH - 8, behavior: 'instant' });
+      // Update active tab immediately
+      navTabs.forEach(t => t.classList.toggle('active', t.dataset.phase == n));
+      scrollNavTab(n);
+      setTimeout(() => { isNavScrolling = false; }, 300);
     });
+  }
+
+  // Scroll the nav bar horizontally to show the active tab (without affecting page scroll)
+  function scrollNavTab(n) {
+    const tab = phaseNavInner.querySelector('[data-phase="' + n + '"]');
+    if (!tab) return;
+    const navRect = phaseNavInner.getBoundingClientRect();
+    const tabRect = tab.getBoundingClientRect();
+    const offset = tabRect.left - navRect.left - (navRect.width / 2) + (tabRect.width / 2);
+    phaseNavInner.scrollBy({ left: offset, behavior: 'smooth' });
   }
 
   // Active tab tracking via IntersectionObserver
@@ -1599,6 +1616,7 @@
   let activePhases = new Set();
 
   const phaseObserver = new IntersectionObserver(entries => {
+    if (isNavScrolling) return;
     entries.forEach(entry => {
       const n = entry.target.dataset.phase;
       if (entry.isIntersecting) {
@@ -1612,11 +1630,9 @@
     const activeN = sorted[0] || null;
     navTabs.forEach(tab => {
       tab.classList.toggle('active', tab.dataset.phase === activeN);
-      // Auto-scroll nav on mobile to keep active tab visible
-      if (tab.dataset.phase === activeN) {
-        tab.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
-      }
     });
+    // Scroll nav horizontally to keep active tab visible (mobile)
+    if (activeN) scrollNavTab(activeN);
   }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
 
   phaseEls.forEach(el => phaseObserver.observe(el));
