@@ -115,6 +115,56 @@
   .date-pill.move .dot { background: var(--green); }
 
   /* WISDOM BAR */
+  /* PHASE NAV */
+  .phase-nav {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+    margin: 0 -20px;
+  }
+  .phase-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0 8px;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .phase-nav-inner::-webkit-scrollbar { display: none; }
+  .phase-nav-tab {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .phase-nav-tab:hover {
+    color: var(--text-secondary);
+  }
+  .phase-nav-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  @media (max-width: 640px) {
+    .phase-nav { margin: 0 -12px; }
+    .phase-nav-inner { justify-content: flex-start; }
+    .phase-nav-tab { font-size: 11px; padding: 9px 12px; }
+  }
+
   .wisdom-bar {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -129,7 +179,7 @@
     transition: background 0.2s;
     user-select: none;
     position: sticky;
-    top: 0;
+    top: var(--nav-height, 38px);
     z-index: 20;
   }
   .wisdom-bar:hover { background: var(--bg); }
@@ -345,7 +395,7 @@
     user-select: none;
     transition: background 0.15s;
     position: sticky;
-    top: var(--wisdom-height, 102px);
+    top: var(--sticky-offset, 140px);
     z-index: 10;
     background: var(--surface);
   }
@@ -642,6 +692,7 @@
   }
 
   @media print {
+    .phase-nav { display: none; }
     .wisdom-bar { display: none; }
     .phase { break-inside: avoid; }
     .phase-body { display: block !important; }
@@ -1505,15 +1556,75 @@
 
   document.getElementById('wisdomBar').addEventListener('click', cycleWisdom);
 
-  // Set phase header sticky offset based on wisdom bar height
-  function setWisdomHeight() {
-    const wb = document.getElementById('wisdomBar');
-    document.documentElement.style.setProperty('--wisdom-height', wb.offsetHeight + 'px');
-  }
-  setWisdomHeight();
-  window.addEventListener('resize', setWisdomHeight);
+  // ── PHASE NAV ──────────────────────────────────────────
+  const phaseNavLabels = ['Before Closing', 'Closing Day', 'Making It Yours', 'Packing & Prep', 'Moving In'];
+  const phaseNavEl = document.createElement('div');
+  phaseNavEl.className = 'phase-nav';
+  phaseNavEl.id = 'phaseNav';
+  const phaseNavInner = document.createElement('div');
+  phaseNavInner.className = 'phase-nav-inner';
+  phaseNavLabels.forEach((label, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'phase-nav-tab';
+    btn.textContent = (i + 1) + '. ' + label;
+    btn.dataset.phase = i + 1;
+    btn.onclick = () => scrollToPhase(i + 1);
+    phaseNavInner.appendChild(btn);
+  });
+  phaseNavEl.appendChild(phaseNavInner);
 
-  // Auto-rotate every 2 minutes
+  // Insert nav before the wisdom bar
+  const wisdomBarEl = document.getElementById('wisdomBar');
+  wisdomBarEl.parentNode.insertBefore(phaseNavEl, wisdomBarEl);
+
+  function scrollToPhase(n) {
+    const phase = document.querySelector('[data-phase="' + n + '"]');
+    if (!phase) return;
+    const navH = phaseNavEl.offsetHeight;
+    const y = phase.getBoundingClientRect().top + window.scrollY - navH - 4;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+
+  // Active tab tracking via IntersectionObserver
+  const phaseEls = document.querySelectorAll('[data-phase]');
+  const navTabs = phaseNavInner.querySelectorAll('.phase-nav-tab');
+  let activePhases = new Set();
+
+  const phaseObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const n = entry.target.dataset.phase;
+      if (entry.isIntersecting) {
+        activePhases.add(n);
+      } else {
+        activePhases.delete(n);
+      }
+    });
+    // Highlight the lowest visible phase number
+    const sorted = [...activePhases].sort((a, b) => a - b);
+    const activeN = sorted[0] || null;
+    navTabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.phase === activeN);
+      // Auto-scroll nav on mobile to keep active tab visible
+      if (tab.dataset.phase === activeN) {
+        tab.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      }
+    });
+  }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+
+  phaseEls.forEach(el => phaseObserver.observe(el));
+
+  // Set sticky offsets for wisdom bar + phase headers
+  function setStickyOffsets() {
+    const navH = phaseNavEl.offsetHeight;
+    const wb = document.getElementById('wisdomBar');
+    document.documentElement.style.setProperty('--nav-height', navH + 'px');
+    document.documentElement.style.setProperty('--wisdom-height', wb.offsetHeight + 'px');
+    document.documentElement.style.setProperty('--sticky-offset', (navH + wb.offsetHeight) + 'px');
+  }
+  setStickyOffsets();
+  window.addEventListener('resize', setStickyOffsets);
+
+  // Auto-rotate every 30 seconds
   setInterval(cycleWisdom, 30000);
 
   // VIEW TOGGLE
