@@ -1584,12 +1584,12 @@
     if (!phase.classList.contains('open')) {
       phase.classList.add('open');
     }
-    // Force layout recalc after expanding, then scroll
+    // Scroll the phase-header into view, accounting for the sticky nav
     requestAnimationFrame(() => {
+      const header = phase.querySelector('.phase-header') || phase;
       const navH = phaseNavEl.offsetHeight;
-      const y = phase.getBoundingClientRect().top + window.scrollY - navH - 4;
-      // Use instant scroll to avoid smooth-scroll drift on long pages with dynamic content
-      window.scrollTo({ top: y, behavior: 'instant' });
+      const headerTop = header.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: headerTop - navH - 8, behavior: 'instant' });
     });
   }
 
